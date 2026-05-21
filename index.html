@@ -1,12 +1,331 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Docker App</title>
+<meta charset="UTF-8">
+<title>Docker App</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050a14;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: 'Space Mono', monospace;
+  }
+
+  #canvas-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  .scene {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .docker-whale {
+    position: relative;
+    width: 200px;
+    height: 140px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(-2deg); }
+    50% { transform: translateY(-18px) rotate(2deg); }
+  }
+
+  .container-box {
+    width: 28px;
+    height: 22px;
+    border-radius: 3px;
+    border: 1.5px solid;
+    animation: pulse-box 2s ease-in-out infinite;
+  }
+
+  .container-box:nth-child(1) { background: #1d9e75cc; border-color: #5dcaa5; animation-delay: 0s; }
+  .container-box:nth-child(2) { background: #185fa5cc; border-color: #85b7eb; animation-delay: 0.2s; }
+  .container-box:nth-child(3) { background: #853d00cc; border-color: #ef9f27; animation-delay: 0.4s; }
+  .container-box:nth-child(4) { background: #534ab7cc; border-color: #afa9ec; animation-delay: 0.6s; }
+
+  @keyframes pulse-box {
+    0%, 100% { opacity: 0.8; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.05); }
+  }
+
+  .title-area { text-align: center; }
+
+  .hello-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 52px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #5dcaa5, #85b7eb, #afa9ec);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+    animation: glow-text 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 30px #1d9e7555);
+  }
+
+  @keyframes glow-text {
+    0%, 100% { filter: drop-shadow(0 0 20px #1d9e7566); }
+    50% { filter: drop-shadow(0 0 40px #85b7eb88); }
+  }
+
+  .from-text {
+    font-size: 13px;
+    color: #5f5e5a;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .docker-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #85b7eb;
+    letter-spacing: 8px;
+    animation: flicker 4s linear infinite;
+  }
+
+  @keyframes flicker {
+    0%, 98%, 100% { opacity: 1; }
+    99% { opacity: 0.4; }
+  }
+
+  .tagline {
+    font-size: 12px;
+    color: #444441;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #888780;
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  .status-dot.green { background: #1d9e75; box-shadow: 0 0 8px #1d9e7599; }
+  .status-dot.blue  { background: #378add; box-shadow: 0 0 8px #378add99; animation-delay: 0.5s; }
+  .status-dot.amber { background: #ba7517; box-shadow: 0 0 8px #ba751799; animation-delay: 1s; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .particles-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 1px;
+    opacity: 0;
+    animation: rise linear infinite;
+  }
+
+  @keyframes rise {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(-100vh) translateX(var(--drift)); opacity: 0; }
+  }
+</style>
 </head>
 <body>
-  <h1>Hello from Docker!</h1>
-  <p>This is a simple index.html file served inside a container.</p>
+
+<canvas id="canvas-bg"></canvas>
+<div class="particles-container" id="particles"></div>
+
+<div class="scene">
+
+  <div class="docker-whale">
+    <svg viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- shadow -->
+      <ellipse cx="100" cy="115" rx="70" ry="12" fill="#1d9e75" opacity="0.15"/>
+
+      <!-- whale body -->
+      <path d="M30 80 Q30 60 55 58 L145 58 Q170 58 170 80 Q170 98 150 102 L50 102 Q30 100 30 80Z"
+            fill="#1d9e75" filter="url(#glow)" opacity="0.9"/>
+
+      <!-- tail -->
+      <path d="M150 68 Q165 65 170 78 Q178 70 172 60 Q165 54 155 58Z" fill="#5dcaa5"/>
+
+      <!-- eye -->
+      <ellipse cx="68" cy="78" rx="8" ry="8" fill="#050a14" opacity="0.6"/>
+      <circle  cx="70" cy="77" r="2.5" fill="#5dcaa5"/>
+
+      <!-- containers stacked on top -->
+      <rect x="55" y="44" width="18" height="14" rx="2" fill="#185fa5" stroke="#85b7eb" stroke-width="1"/>
+      <rect x="78" y="44" width="18" height="14" rx="2" fill="#534ab7" stroke="#afa9ec" stroke-width="1"/>
+      <rect x="101" y="44" width="18" height="14" rx="2" fill="#0f6e56" stroke="#5dcaa5" stroke-width="1"/>
+
+      <rect x="55" y="26" width="18" height="14" rx="2" fill="#853d00" stroke="#ef9f27" stroke-width="1"/>
+      <rect x="78" y="26" width="18" height="14" rx="2" fill="#185fa5" stroke="#85b7eb" stroke-width="1"/>
+
+      <rect x="55" y="8"  width="18" height="14" rx="2" fill="#534ab7" stroke="#afa9ec" stroke-width="1"/>
+
+      <!-- spout lines -->
+      <path d="M125 80 Q138 70 148 74" stroke="#9fe1cb" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M125 87 Q135 82 142 84" stroke="#9fe1cb" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <div class="title-area">
+    <div class="hello-text">HELLO</div>
+    <div class="from-text">served from</div>
+    <div class="docker-label">DOCKER</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-item"><div class="status-dot green"></div>CONTAINER RUNNING</div>
+    <div class="status-item"><div class="status-dot blue"></div>PORT 80 EXPOSED</div>
+    <div class="status-item"><div class="status-dot amber"></div>LAYER CACHED</div>
+  </div>
+
+  <div class="tagline">build · ship · run</div>
+</div>
+
+<script>
+  /* ── particle network background ── */
+  const canvas = document.getElementById('canvas-bg');
+  const ctx    = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const dots = Array.from({ length: 80 }, () => ({
+    x:     Math.random() * window.innerWidth,
+    y:     Math.random() * window.innerHeight,
+    r:     Math.random() * 1.5 + 0.3,
+    speed: Math.random() * 0.3 + 0.1,
+    dx:    (Math.random() - 0.5) * 0.4,
+    color: ['#1d9e75','#378add','#534ab7','#ef9f27'][Math.floor(Math.random() * 4)]
+  }));
+
+  const lines = Array.from({ length: 30 }, () => ({
+    x1:      Math.random() * window.innerWidth,
+    y1:      Math.random() * window.innerHeight,
+    len:     Math.random() * 80 + 20,
+    angle:   Math.random() * Math.PI * 2,
+    speed:   (Math.random() - 0.5) * 0.5,
+    opacity: Math.random() * 0.12 + 0.03,
+    color:   ['#5dcaa5','#85b7eb','#afa9ec'][Math.floor(Math.random() * 3)]
+  }));
+
+  function drawFrame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    lines.forEach(l => {
+      l.angle += l.speed * 0.005;
+      ctx.save();
+      ctx.strokeStyle  = l.color;
+      ctx.globalAlpha  = l.opacity;
+      ctx.lineWidth    = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(l.x1, l.y1);
+      ctx.lineTo(l.x1 + Math.cos(l.angle) * l.len, l.y1 + Math.sin(l.angle) * l.len);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    dots.forEach(d => {
+      d.x += d.dx;
+      d.y -= d.speed;
+      if (d.y < -10)                        { d.y = canvas.height + 10; d.x = Math.random() * canvas.width; }
+      if (d.x < 0 || d.x > canvas.width)   d.dx *= -1;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle   = d.color;
+      ctx.globalAlpha = 0.5;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    for (let i = 0; i < dots.length; i++) {
+      for (let j = i + 1; j < dots.length; j++) {
+        const dx   = dots[i].x - dots[j].x;
+        const dy   = dots[i].y - dots[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(dots[i].x, dots[i].y);
+          ctx.lineTo(dots[j].x, dots[j].y);
+          ctx.strokeStyle  = '#5dcaa5';
+          ctx.globalAlpha  = (1 - dist / 100) * 0.08;
+          ctx.lineWidth    = 0.5;
+          ctx.stroke();
+          ctx.globalAlpha  = 1;
+        }
+      }
+    }
+
+    requestAnimationFrame(drawFrame);
+  }
+  requestAnimationFrame(drawFrame);
+
+  /* ── floating particles ── */
+  const pContainer = document.getElementById('particles');
+  const colors = ['#5dcaa5','#85b7eb','#afa9ec','#ef9f27','#1d9e75'];
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left            = (Math.random() * 100) + '%';
+    p.style.bottom          = (Math.random() * 20)  + '%';
+    p.style.background      = colors[Math.floor(Math.random() * colors.length)];
+    p.style.setProperty('--drift', ((Math.random() - 0.5) * 120) + 'px');
+    p.style.animationDuration = (Math.random() * 8 + 5) + 's';
+    p.style.animationDelay   = (Math.random() * 8) + 's';
+    p.style.borderRadius     = Math.random() > 0.5 ? '50%' : '2px';
+    pContainer.appendChild(p);
+  }
+</script>
 </body>
 </html>
 
