@@ -12,10 +12,176 @@
 
 <style>
 
-/* KEEP YOUR CSS SAME (UNCHANGED) */
+:root{
+  --bg:#05070d;
+  --surface:#0d1320;
+  --surface2:#121b2d;
+  --accent:#00d4ff;
+  --accent2:#7c3aed;
+  --text:#f1f5f9;
+  --muted:#64748b;
+  --border:rgba(255,255,255,0.08);
+  --glow:0 0 25px rgba(0,212,255,0.25);
+}
 
-/* ADD THIS ONLY */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:25px;
+
+  background-image:
+    radial-gradient(circle at top left, rgba(0,212,255,0.08), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(124,58,237,0.08), transparent 30%);
+}
+
+.player-shell{
+  width:100%;
+  max-width:1200px;
+}
+
+/* TOPBAR */
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.logo{
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+
+.logo span{
+  color:var(--accent);
+}
+
+.badge{
+  padding:7px 14px;
+  border-radius:10px;
+  border:1px solid rgba(0,212,255,0.25);
+  background:rgba(0,212,255,0.08);
+  color:var(--accent);
+  font-size:11px;
+  letter-spacing:1px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* PLAYER */
+
+.player-wrap{
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  background:#000;
+  border:1px solid var(--border);
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.65),
+    0 0 0 1px rgba(255,255,255,0.03);
+}
+
+#videoContainer{
+  width:100%;
+  background:#000;
+  aspect-ratio:16/9;
+}
+
+video,
+iframe{
+  width:100%;
+  height:100%;
+  border:none;
+  display:block;
+  background:#000;
+}
+
+/* SUBTITLE STYLE */
+video::cue{
+  color:#fff;
+  font-size:18px;
+  background:rgba(0,0,0,0.75);
+}
+
+/* OVERLAY */
+.overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  background:linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  opacity:0;
+  transition:0.25s;
+}
+
+.player-wrap:hover .overlay,
+.overlay.show{
+  opacity:1;
+}
+
+/* TOP */
+.overlay-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 22px;
+}
+
+.video-title{
+  font-size:14px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+.live-badge{
+  padding:6px 12px;
+  border-radius:8px;
+  background:rgba(0,212,255,0.08);
+  border:1px solid rgba(0,212,255,0.2);
+  color:var(--accent);
+  font-size:11px;
+}
+
+/* CONTROLS */
+.controls{
+  padding:0 18px 18px;
+}
+
+.controls-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.ctrl{
+  width:42px;
+  height:42px;
+  border:none;
+  border-radius:12px;
+  background:transparent;
+  color:#fff;
+  cursor:pointer;
+}
+
+.ctrl:hover{
+  background:rgba(255,255,255,0.08);
+}
+
+/* SUBTITLE MENU */
 .subtitle-menu{
   position:absolute;
   bottom:90px;
@@ -50,10 +216,25 @@
   background:rgba(255,255,255,0.08);
 }
 
-video::cue{
-  color:white;
-  font-size:18px;
-  background:rgba(0,0,0,0.7);
+/* NOTIF */
+.notif{
+  position:fixed;
+  bottom:25px;
+  right:25px;
+  padding:14px 18px;
+  border-radius:12px;
+  background:var(--surface2);
+  border:1px solid rgba(0,212,255,0.25);
+  color:var(--accent);
+  font-size:13px;
+  transform:translateY(80px);
+  opacity:0;
+  transition:0.25s;
+}
+
+.notif.show{
+  transform:translateY(0);
+  opacity:1;
 }
 
 </style>
@@ -68,18 +249,19 @@ video::cue{
     <div class="badge">UNIVERSAL VIDEO SUPPORT</div>
   </div>
 
-  <div class="player-wrap" id="playerWrap">
+  <div class="player-wrap">
 
     <div id="videoContainer"></div>
 
     <div class="overlay show">
 
       <div class="overlay-top">
-        <div class="video-title" id="videoTitle">Loading...</div>
+        <div class="video-title">Video Player</div>
         <div class="live-badge">AUTO DETECT</div>
       </div>
 
       <div class="controls">
+
         <div class="controls-row">
 
           <button class="ctrl" onclick="togglePlay()">▶</button>
@@ -87,9 +269,8 @@ video::cue{
           <!-- SUBTITLE BUTTON -->
           <button class="ctrl" onclick="toggleSubtitleMenu()">CC</button>
 
-          <input type="range" min="0" max="100" value="100" oninput="setVolume(this.value)">
-
         </div>
+
       </div>
 
     </div>
@@ -114,7 +295,7 @@ video::cue{
 
 <script>
 
-const VIDEO_URL = "YOUR VIDEO URL HERE";
+const VIDEO_URL = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
 
 const container = document.getElementById("videoContainer");
 
@@ -135,15 +316,13 @@ function toggleSubtitleMenu(){
   document.getElementById("subtitleMenu").classList.toggle("show");
 }
 
-/* =========================
-   AUTO SUBTITLE DETECT
-========================= */
+/* AUTO DETECT */
 function autoSubtitles(){
 
   const tracks = player.textTracks;
 
   if(!tracks || tracks.length === 0){
-    alert("No embedded subtitles found");
+    showNotif("No embedded subtitles found");
     return;
   }
 
@@ -151,12 +330,11 @@ function autoSubtitles(){
     tracks[i].mode = "showing";
   }
 
+  showNotif("Auto subtitles ON");
   document.getElementById("subtitleMenu").classList.remove("show");
 }
 
-/* =========================
-   DISABLE SUBTITLES
-========================= */
+/* OFF */
 function disableSubtitles(){
 
   const tracks = player.textTracks;
@@ -165,22 +343,17 @@ function disableSubtitles(){
     tracks[i].mode = "disabled";
   }
 
+  showNotif("Subtitles OFF");
   document.getElementById("subtitleMenu").classList.remove("show");
 }
 
-/* =========================
-   MANUAL UPLOAD (.VTT / .SRT)
-========================= */
+/* UPLOAD SUBTITLE */
 function uploadSubtitle(event){
 
   const file = event.target.files[0];
   if(!file) return;
 
   const url = URL.createObjectURL(file);
-
-  // remove old subtitles
-  const old = player.querySelectorAll("track");
-  old.forEach(t => t.remove());
 
   const track = document.createElement("track");
   track.kind = "subtitles";
@@ -194,12 +367,26 @@ function uploadSubtitle(event){
     track.mode = "showing";
   });
 
+  showNotif("Subtitle Loaded");
   document.getElementById("subtitleMenu").classList.remove("show");
 }
 
-/* VOLUME */
-function setVolume(v){
-  player.volume = v/100;
+/* NOTIFICATION */
+function showNotif(msg){
+
+  let el = document.getElementById("notif");
+
+  if(!el){
+    el = document.createElement("div");
+    el.id = "notif";
+    el.className = "notif";
+    document.body.appendChild(el);
+  }
+
+  el.textContent = msg;
+  el.classList.add("show");
+
+  setTimeout(()=>el.classList.remove("show"),2000);
 }
 
 </script>
