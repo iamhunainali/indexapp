@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <title>CinePlayer X</title>
 
@@ -110,6 +110,15 @@ iframe{
   border:none;
   display:block;
   background:#000;
+}
+
+/* SUBTITLE STYLE */
+
+video::cue{
+  color:#fff;
+  font-size:18px;
+  font-weight:600;
+  background:rgba(0,0,0,0.75);
 }
 
 /* OVERLAY */
@@ -270,6 +279,55 @@ iframe{
   width:90px;
 }
 
+/* SUBTITLE MENU */
+
+.subtitle-menu{
+  position:absolute;
+  bottom:90px;
+  right:20px;
+
+  display:none;
+  flex-direction:column;
+  gap:8px;
+
+  padding:12px;
+
+  border-radius:16px;
+
+  background:rgba(10,15,25,0.96);
+  border:1px solid rgba(255,255,255,0.08);
+
+  backdrop-filter:blur(12px);
+
+  z-index:50;
+}
+
+.subtitle-menu.show{
+  display:flex;
+}
+
+.subtitle-menu button{
+  background:transparent;
+  border:none;
+  color:#fff;
+
+  padding:10px 14px;
+  border-radius:10px;
+
+  cursor:pointer;
+
+  text-align:left;
+
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;
+
+  transition:0.2s;
+}
+
+.subtitle-menu button:hover{
+  background:rgba(255,255,255,0.08);
+}
+
 /* INFO */
 
 .info-grid{
@@ -361,13 +419,14 @@ iframe{
 
   <div class="player-wrap" id="playerWrap">
 
-    <!-- VIDEO CONTAINER -->
+    <!-- VIDEO -->
     <div id="videoContainer"></div>
 
     <!-- OVERLAY -->
     <div class="overlay show" id="overlay">
 
       <div class="overlay-top">
+
         <div class="video-title" id="videoTitle">
           Loading Video...
         </div>
@@ -375,6 +434,7 @@ iframe{
         <div class="live-badge" id="videoType">
           AUTO DETECT
         </div>
+
       </div>
 
       <!-- CONTROLS -->
@@ -431,6 +491,13 @@ iframe{
             </svg>
           </button>
 
+          <!-- SUBTITLE -->
+          <button class="ctrl" onclick="toggleSubtitleMenu()">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 6h16v12H4zM7 10h4v2H7zm0 4h7v2H7zm9-4h1v6h-1z"/>
+            </svg>
+          </button>
+
           <!-- FULLSCREEN -->
           <button class="ctrl" onclick="toggleFullscreen()">
             <svg viewBox="0 0 24 24">
@@ -439,7 +506,25 @@ iframe{
           </button>
 
         </div>
+
       </div>
+
+    </div>
+
+    <!-- SUBTITLE MENU -->
+    <div class="subtitle-menu" id="subtitleMenu">
+
+      <button onclick="disableSubtitles()">
+        OFF
+      </button>
+
+      <button onclick="loadSubtitle('English','subs/en.vtt')">
+        English
+      </button>
+
+      <button onclick="loadSubtitle('Urdu','subs/urdu.vtt')">
+        Urdu
+      </button>
 
     </div>
 
@@ -486,8 +571,7 @@ iframe{
 <script>
 
 /* ==========================================
-   DEVELOPER VIDEO LINK
-   PASTE ANY VIDEO URL HERE
+   VIDEO URL
 ========================================== */
 
 const VIDEO_URL =
@@ -684,7 +768,8 @@ function updateIcons(){
   ? "M8 5v14l11-7z"
   : "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
 
-  document.querySelectorAll("#playIcon path,#centerIcon path")
+  document
+  .querySelectorAll("#playIcon path,#centerIcon path")
   .forEach(el=>el.setAttribute("d",path));
 
 }
@@ -779,6 +864,71 @@ document.getElementById("progress")
   pct * player.duration;
 
 });
+
+/* SUBTITLE MENU */
+
+function toggleSubtitleMenu(){
+
+  document
+  .getElementById("subtitleMenu")
+  .classList.toggle("show");
+
+}
+
+/* LOAD SUBTITLE */
+
+function loadSubtitle(label,src){
+
+  if(!player) return;
+
+  const oldTracks =
+  player.querySelectorAll("track");
+
+  oldTracks.forEach(t=>t.remove());
+
+  const track =
+  document.createElement("track");
+
+  track.kind = "subtitles";
+  track.label = label;
+  track.srclang = "en";
+  track.src = src;
+  track.default = true;
+
+  player.appendChild(track);
+
+  track.mode = "showing";
+
+  showNotif("Subtitle: " + label);
+
+  document
+  .getElementById("subtitleMenu")
+  .classList.remove("show");
+
+}
+
+/* DISABLE SUBTITLE */
+
+function disableSubtitles(){
+
+  if(!player) return;
+
+  const tracks =
+  player.textTracks;
+
+  for(let i=0;i<tracks.length;i++){
+
+    tracks[i].mode = "hidden";
+
+  }
+
+  showNotif("Subtitles Off");
+
+  document
+  .getElementById("subtitleMenu")
+  .classList.remove("show");
+
+}
 
 /* FORMAT TIME */
 
