@@ -3,15 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>CinePlayer X</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
 <style>
-
 :root{
   --bg:#05070d;
   --surface:#0d1320;
@@ -23,13 +18,7 @@
   --border:rgba(255,255,255,0.08);
   --glow:0 0 25px rgba(0,212,255,0.25);
 }
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
+*{ margin:0; padding:0; box-sizing:border-box; }
 body{
   background:var(--bg);
   color:var(--text);
@@ -39,965 +28,589 @@ body{
   justify-content:center;
   align-items:center;
   padding:25px;
-
   background-image:
-    radial-gradient(circle at top left, rgba(0,212,255,0.08), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(124,58,237,0.08), transparent 30%);
+    radial-gradient(circle at top left,rgba(0,212,255,0.08),transparent 30%),
+    radial-gradient(circle at bottom right,rgba(124,58,237,0.08),transparent 30%);
 }
-
-.player-shell{
-  width:100%;
-  max-width:1200px;
-}
-
-/* TOPBAR */
-
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:16px;
-}
-
-.logo{
-  font-size:28px;
-  font-weight:700;
-  letter-spacing:3px;
-  text-transform:uppercase;
-}
-
-.logo span{
-  color:var(--accent);
-}
-
+.player-shell{ width:100%; max-width:1200px; }
+.topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.logo{ font-size:28px; font-weight:700; letter-spacing:3px; text-transform:uppercase; }
+.logo span{ color:var(--accent); }
 .badge{
-  padding:7px 14px;
-  border-radius:10px;
+  padding:7px 14px; border-radius:10px;
   border:1px solid rgba(0,212,255,0.25);
   background:rgba(0,212,255,0.08);
-  color:var(--accent);
-  font-size:11px;
-  letter-spacing:1px;
-  font-family:'JetBrains Mono',monospace;
+  color:var(--accent); font-size:11px;
+  letter-spacing:1px; font-family:'JetBrains Mono',monospace;
 }
-
-/* PLAYER */
-
 .player-wrap{
-  position:relative;
-  overflow:hidden;
-  border-radius:24px;
-  background:#000;
+  position:relative; overflow:hidden;
+  border-radius:24px; background:#000;
   border:1px solid var(--border);
-
-  box-shadow:
-    0 30px 80px rgba(0,0,0,0.65),
-    0 0 0 1px rgba(255,255,255,0.03);
+  box-shadow:0 30px 80px rgba(0,0,0,0.65),0 0 0 1px rgba(255,255,255,0.03);
 }
+#videoContainer{ width:100%; background:#000; aspect-ratio:16/9; position:relative; }
+video,iframe{ width:100%; height:100%; border:none; display:block; background:#000; }
 
-/* VIDEO */
-
-#videoContainer{
-  width:100%;
-  background:#000;
-  aspect-ratio:16/9;
-}
-
-video,
-iframe{
-  width:100%;
-  height:100%;
-  border:none;
-  display:block;
-  background:#000;
-}
-
-/* OVERLAY */
-
-.overlay{
+/* ── CUSTOM SUBTITLE DISPLAY ── */
+#subtitleBox{
   position:absolute;
-  inset:0;
-
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-
-  background:
-    linear-gradient(to top,
-    rgba(0,0,0,0.85) 0%,
-    transparent 40%,
-    rgba(0,0,0,0.35) 100%);
-
-  opacity:0;
-  transition:0.25s;
-}
-
-.player-wrap:hover .overlay,
-.overlay.show{
-  opacity:1;
-}
-
-/* TOP */
-
-.overlay-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 22px;
-}
-
-.video-title{
-  font-size:14px;
-  font-family:'JetBrains Mono',monospace;
-  letter-spacing:1px;
-}
-
-.live-badge{
-  padding:6px 12px;
-  border-radius:8px;
-  background:rgba(0,212,255,0.08);
-  border:1px solid rgba(0,212,255,0.2);
-  color:var(--accent);
-  font-size:11px;
-  font-family:'JetBrains Mono',monospace;
-}
-
-/* CENTER PLAY */
-
-.center-play{
-  position:absolute;
-  top:50%;
+  bottom:80px;
   left:50%;
-  transform:translate(-50%,-50%);
-
-  width:90px;
-  height:90px;
-
-  border-radius:50%;
-  background:rgba(0,0,0,0.55);
-  border:2px solid rgba(255,255,255,0.2);
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-
-  cursor:pointer;
-
-  backdrop-filter:blur(8px);
-
-  transition:0.2s;
-}
-
-.center-play:hover{
-  border-color:var(--accent);
-  box-shadow:var(--glow);
-}
-
-.center-play svg{
-  width:36px;
-  fill:#fff;
-  margin-left:4px;
-}
-
-/* CONTROLS */
-
-.controls{
-  padding:0 18px 18px;
-}
-
-.progress{
-  width:100%;
-  height:6px;
-  background:rgba(255,255,255,0.12);
-  border-radius:20px;
-  overflow:hidden;
-  cursor:pointer;
-  margin-bottom:16px;
-}
-
-.progress-fill{
-  width:0%;
-  height:100%;
-  background:
-    linear-gradient(90deg,var(--accent),var(--accent2));
-}
-
-.controls-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.ctrl{
-  width:42px;
-  height:42px;
-  border:none;
-  border-radius:12px;
-  background:transparent;
-  color:#fff;
-  cursor:pointer;
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-
-  transition:0.18s;
-}
-
-.ctrl:hover{
-  background:rgba(255,255,255,0.08);
-}
-
-.ctrl svg{
-  width:20px;
-  height:20px;
-  fill:currentColor;
-}
-
-.spacer{
-  flex:1;
-}
-
-.time{
-  font-size:12px;
-  font-family:'JetBrains Mono',monospace;
-  color:rgba(255,255,255,0.75);
-}
-
-/* VOLUME */
-
-.volume{
-  width:90px;
-}
-
-/* SUBTITLE CONTROLS */
-
-.subtitle-controls{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.subtitle-file{
+  transform:translateX(-50%);
+  z-index:100;
+  text-align:center;
+  pointer-events:none;
+  max-width:85%;
   display:none;
 }
+#subtitleText{
+  display:inline-block;
+  background:rgba(0,0,0,0.82);
+  color:#fff;
+  font-size:20px;
+  font-family:'Rajdhani',sans-serif;
+  font-weight:600;
+  padding:6px 18px;
+  border-radius:6px;
+  line-height:1.5;
+  letter-spacing:0.3px;
+  text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  white-space:pre-line;
+}
 
+.overlay{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  justify-content:space-between;
+  background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 40%,rgba(0,0,0,0.35) 100%);
+  opacity:0; transition:0.25s;
+}
+.player-wrap:hover .overlay,.overlay.show{ opacity:1; }
+.overlay-top{ display:flex; justify-content:space-between; align-items:center; padding:18px 22px; }
+.video-title{ font-size:14px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; }
+.live-badge{
+  padding:6px 12px; border-radius:8px;
+  background:rgba(0,212,255,0.08);
+  border:1px solid rgba(0,212,255,0.2);
+  color:var(--accent); font-size:11px;
+  font-family:'JetBrains Mono',monospace;
+}
+.center-play{
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:90px; height:90px; border-radius:50%;
+  background:rgba(0,0,0,0.55);
+  border:2px solid rgba(255,255,255,0.2);
+  display:flex; justify-content:center; align-items:center;
+  cursor:pointer; backdrop-filter:blur(8px); transition:0.2s;
+}
+.center-play:hover{ border-color:var(--accent); box-shadow:var(--glow); }
+.center-play svg{ width:36px; fill:#fff; margin-left:4px; }
+.controls{ padding:0 18px 18px; }
+.progress{
+  width:100%; height:6px;
+  background:rgba(255,255,255,0.12);
+  border-radius:20px; overflow:hidden;
+  cursor:pointer; margin-bottom:16px;
+}
+.progress-fill{
+  width:0%; height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.controls-row{ display:flex; align-items:center; gap:8px; }
+.ctrl{
+  width:42px; height:42px; border:none;
+  border-radius:12px; background:transparent;
+  color:#fff; cursor:pointer;
+  display:flex; justify-content:center; align-items:center; transition:0.18s;
+}
+.ctrl:hover{ background:rgba(255,255,255,0.08); }
+.ctrl svg{ width:20px; height:20px; fill:currentColor; }
+.ctrl.active{ color:var(--accent); }
+.spacer{ flex:1; }
+.time{ font-size:12px; font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.75); }
+.volume{ width:90px; }
+.subtitle-controls{ display:flex; align-items:center; gap:6px; }
+.subtitle-file{ display:none; }
 .subtitle-select{
   background:rgba(255,255,255,0.08);
   border:1px solid rgba(255,255,255,0.12);
-  border-radius:8px;
-  color:#fff;
-  padding:4px 8px;
-  font-size:11px;
+  border-radius:8px; color:#fff;
+  padding:4px 8px; font-size:11px;
   font-family:'JetBrains Mono',monospace;
+  max-width:120px;
 }
-
-.subtitle-select option{
-  background:var(--surface2);
-  color:#fff;
-}
-
-/* INFO */
-
+.subtitle-select option{ background:var(--surface2); color:#fff; }
 .info-grid{
   margin-top:18px;
-
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
 }
-
 .info-card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:16px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:18px; padding:16px;
 }
-
-.info-label{
-  color:var(--muted);
-  font-size:11px;
-  font-family:'JetBrains Mono',monospace;
-  margin-bottom:8px;
-}
-
-.info-value{
-  font-size:15px;
-  font-weight:600;
-}
-
-/* NOTIF */
-
+.info-label{ color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace; margin-bottom:8px; }
+.info-value{ font-size:15px; font-weight:600; }
 .notif{
-  position:fixed;
-  bottom:25px;
-  right:25px;
-
-  padding:14px 18px;
-
-  border-radius:12px;
-
+  position:fixed; bottom:25px; right:25px;
+  padding:14px 18px; border-radius:12px;
   background:var(--surface2);
   border:1px solid rgba(0,212,255,0.25);
-
-  color:var(--accent);
-
-  font-size:13px;
+  color:var(--accent); font-size:13px;
   font-family:'JetBrains Mono',monospace;
-
-  transform:translateY(80px);
-  opacity:0;
-  transition:0.25s;
+  transform:translateY(80px); opacity:0; transition:0.25s;
 }
-
-.notif.show{
-  transform:translateY(0);
-  opacity:1;
-}
-
-@media(max-width:900px){
-
-  .info-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-}
-
-@media(max-width:650px){
-
-  .info-grid{
-    grid-template-columns:1fr;
-  }
-
-  .volume{
-    width:60px;
-  }
-
-}
-
+.notif.show{ transform:translateY(0); opacity:1; }
+@media(max-width:900px){ .info-grid{ grid-template-columns:1fr 1fr; } }
+@media(max-width:650px){ .info-grid{ grid-template-columns:1fr; } .volume{ width:60px; } }
 </style>
 </head>
 <body>
 
 <div class="player-shell">
-
   <div class="topbar">
     <div class="logo">Cine<span>Player</span></div>
     <div class="badge">UNIVERSAL VIDEO SUPPORT</div>
   </div>
 
   <div class="player-wrap" id="playerWrap">
+    <div id="videoContainer" style="position:relative;">
 
-    <!-- VIDEO CONTAINER -->
-    <div id="videoContainer"></div>
-
-    <!-- OVERLAY -->
-    <div class="overlay show" id="overlay">
-
-      <div class="overlay-top">
-        <div class="video-title" id="videoTitle">
-          Loading Video...
-        </div>
-
-        <div class="live-badge" id="videoType">
-          AUTO DETECT
-        </div>
+      <!-- ── CUSTOM SUBTITLE DISPLAY (always on top) ── -->
+      <div id="subtitleBox">
+        <span id="subtitleText"></span>
       </div>
 
-      <!-- CONTROLS -->
-      <div class="controls">
+    </div>
 
+    <div class="overlay show" id="overlay">
+      <div class="overlay-top">
+        <div class="video-title" id="videoTitle">Loading Video...</div>
+        <div class="live-badge" id="videoType">AUTO DETECT</div>
+      </div>
+
+      <div class="controls">
         <div class="progress" id="progress">
           <div class="progress-fill" id="progressFill"></div>
         </div>
 
         <div class="controls-row">
-
-          <!-- PLAY -->
           <button class="ctrl" onclick="togglePlay()">
-            <svg id="playIcon" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
+            <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </button>
 
-          <!-- BACK -->
           <button class="ctrl" onclick="skip(-10)">
-            <svg viewBox="0 0 24 24">
-              <path d="M11 18V6l-8.5 6L11 18zm1-12v12l8.5-6L12 6z"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6L11 18zm1-12v12l8.5-6L12 6z"/></svg>
           </button>
 
-          <!-- FORWARD -->
           <button class="ctrl" onclick="skip(10)">
-            <svg viewBox="0 0 24 24">
-              <path d="M13 18l8.5-6L13 6v12zm-1-12L3.5 12 12 18V6z"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M13 18l8.5-6L13 6v12zm-1-12L3.5 12 12 18V6z"/></svg>
           </button>
 
-          <!-- VOLUME -->
-          <input
-            type="range"
-            class="volume"
-            min="0"
-            max="100"
-            value="100"
-            oninput="setVolume(this.value)"
-          >
+          <input type="range" class="volume" min="0" max="100" value="100" oninput="setVolume(this.value)">
 
           <!-- SUBTITLE CONTROLS -->
           <div class="subtitle-controls">
-            <button class="ctrl" onclick="document.getElementById('subtitleFile').click()" title="Add Subtitle">
-              <svg viewBox="0 0 24 24">
-                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"/>
-              </svg>
+            <!-- Upload subtitle file -->
+            <button class="ctrl" id="subToggleBtn" onclick="document.getElementById('subtitleFile').click()" title="Load Subtitle File (SRT/VTT)">
+              <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"/></svg>
             </button>
-            
-            <select class="subtitle-select" id="subtitleSelect" onchange="changeSubtitle()">
-              <option value="">No Subtitles</option>
+
+            <select class="subtitle-select" id="subtitleSelect" onchange="switchSubtitleTrack()">
+              <option value="">Off</option>
             </select>
-            
+
             <input type="file" id="subtitleFile" class="subtitle-file" accept=".srt,.vtt,.ass" onchange="loadSubtitleFile(this)">
           </div>
 
-          <!-- TIME -->
-          <div class="time" id="time">
-            0:00 / 0:00
-          </div>
-
+          <div class="time" id="time">0:00 / 0:00</div>
           <div class="spacer"></div>
 
-          <!-- SPEED -->
           <button class="ctrl" onclick="cycleSpeed()">
-            <svg viewBox="0 0 24 24">
-              <path d="M13 2L3 14h7v8l10-12h-7z"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h7v8l10-12h-7z"/></svg>
           </button>
 
-          <!-- FULLSCREEN -->
           <button class="ctrl" onclick="toggleFullscreen()">
-            <svg viewBox="0 0 24 24">
-              <path d="M7 14H5v5h5v-2H7v-3zm12 5v-5h-2v3h-3v2h5zM7 7h3V5H5v5h2V7zm10 0v3h2V5h-5v2h3z"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm12 5v-5h-2v3h-3v2h5zM7 7h3V5H5v5h2V7zm10 0v3h2V5h-5v2h3z"/></svg>
           </button>
-
         </div>
       </div>
-
     </div>
 
-    <!-- CENTER PLAY -->
     <div class="center-play" id="centerPlay" onclick="togglePlay()">
-
-      <svg id="centerIcon" viewBox="0 0 24 24">
-        <path d="M8 5v14l11-7z"/>
-      </svg>
-
+      <svg id="centerIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </div>
-
   </div>
 
-  <!-- INFO -->
   <div class="info-grid">
-
-    <div class="info-card">
-      <div class="info-label">STATUS</div>
-      <div class="info-value" id="infoStatus">Loading</div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-label">FORMAT</div>
-      <div class="info-value" id="infoFormat">—</div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-label">RESOLUTION</div>
-      <div class="info-value" id="infoRes">—</div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-label">DURATION</div>
-      <div class="info-value" id="infoDur">—</div>
-    </div>
-
+    <div class="info-card"><div class="info-label">STATUS</div><div class="info-value" id="infoStatus">Loading</div></div>
+    <div class="info-card"><div class="info-label">FORMAT</div><div class="info-value" id="infoFormat">—</div></div>
+    <div class="info-card"><div class="info-label">RESOLUTION</div><div class="info-value" id="infoRes">—</div></div>
+    <div class="info-card"><div class="info-label">DURATION</div><div class="info-value" id="infoDur">—</div></div>
   </div>
-
 </div>
 
 <div class="notif" id="notif"></div>
 
 <script>
+/* ══════════════════════════════════════════
+   DEVELOPER: PASTE YOUR VIDEO URL HERE
+══════════════════════════════════════════ */
+const VIDEO_URL = "";
+/* ══════════════════════════════════════════ */
 
-/* ==========================================
-   DEVELOPER VIDEO LINK
-   PASTE ANY VIDEO URL HERE
-========================================== */
-
-const VIDEO_URL =
-"";
-
-/* ========================================== */
-
-const container =
-document.getElementById("videoContainer");
-
+const container = document.getElementById("videoContainer");
 let player = null;
 let currentSpeed = 1;
 
-function isYouTube(url){
+// ── SUBTITLE ENGINE ──
+let subtitleCues = [];       // parsed cue objects {start, end, text}
+let subtitleActive = false;
+let subtitleRAF = null;
 
-  return url.includes("youtube.com") ||
-         url.includes("youtu.be");
-
-}
-
-function isM3U8(url){
-
-  return url.includes(".m3u8");
-
-}
-
-function getType(url){
-
-  if(isYouTube(url)) return "YOUTUBE";
-  if(isM3U8(url)) return "HLS STREAM";
-
-  if(url.includes(".mp4")) return "MP4";
-  if(url.includes(".webm")) return "WEBM";
-  if(url.includes(".ogg")) return "OGG";
-
+// ── HELPERS ──
+function isYouTube(u){ return u.includes("youtube.com") || u.includes("youtu.be"); }
+function isM3U8(u){ return u.includes(".m3u8"); }
+function getType(u){
+  if(isYouTube(u)) return "YOUTUBE";
+  if(isM3U8(u))   return "HLS STREAM";
+  if(u.includes(".mp4"))  return "MP4";
+  if(u.includes(".webm")) return "WEBM";
+  if(u.includes(".ogg"))  return "OGG";
   return "VIDEO";
 }
 
-document.getElementById("videoType")
-.textContent = getType(VIDEO_URL);
+document.getElementById("videoType").textContent   = getType(VIDEO_URL);
+document.getElementById("infoFormat").textContent  = getType(VIDEO_URL);
+document.getElementById("videoTitle").textContent  = VIDEO_URL.split("/").pop().split("?")[0] || "No Source";
 
-document.getElementById("infoFormat")
-.textContent = getType(VIDEO_URL);
+// ── SRT → cues parser ──
+function parseSRT(text){
+  const cues = [];
+  // normalise line endings
+  const blocks = text.trim().replace(/\r\n/g,"\n").replace(/\r/g,"\n").split(/\n\n+/);
+  blocks.forEach(block => {
+    const lines = block.split("\n");
+    // find the timing line
+    const timeIdx = lines.findIndex(l => l.includes("-->"));
+    if(timeIdx < 0) return;
+    const times = lines[timeIdx].split("-->");
+    if(times.length < 2) return;
+    const start = srtTimeToSec(times[0].trim());
+    const end   = srtTimeToSec(times[1].trim());
+    const text  = lines.slice(timeIdx + 1).join("\n")
+                    .replace(/<[^>]+>/g,"")   // strip HTML tags like <i>
+                    .trim();
+    if(text) cues.push({ start, end, text });
+  });
+  return cues;
+}
 
-document.getElementById("videoTitle")
-.textContent =
-VIDEO_URL.split("/").pop().split("?")[0];
+function srtTimeToSec(t){
+  // format: HH:MM:SS,mmm  or  HH:MM:SS.mmm
+  t = t.replace(",",".");
+  const parts = t.split(":");
+  if(parts.length < 3) return 0;
+  return parseFloat(parts[0])*3600 + parseFloat(parts[1])*60 + parseFloat(parts[2]);
+}
 
-/* SUBTITLE FUNCTIONS */
+// ── VTT → cues parser ──
+function parseVTT(text){
+  const cues = [];
+  const blocks = text.replace(/\r\n/g,"\n").replace(/\r/g,"\n").split(/\n\n+/);
+  blocks.forEach(block => {
+    if(block.startsWith("WEBVTT") || block.trim() === "") return;
+    const lines = block.split("\n");
+    const timeIdx = lines.findIndex(l => l.includes("-->"));
+    if(timeIdx < 0) return;
+    const times = lines[timeIdx].split("-->");
+    const start = vttTimeToSec(times[0].trim());
+    const end   = vttTimeToSec(times[1].trim().split(" ")[0]); // ignore position tags
+    const text  = lines.slice(timeIdx + 1).join("\n")
+                    .replace(/<[^>]+>/g,"")
+                    .trim();
+    if(text) cues.push({ start, end, text });
+  });
+  return cues;
+}
 
-function autoDetectSubtitles() {
-  if (!player) return;
-  
-  // Auto-detect embedded subtitles
-  const tracks = player.textTracks;
-  const select = document.getElementById("subtitleSelect");
-  
-  // Clear existing options except "No Subtitles"
-  select.innerHTML = '<option value="">No Subtitles</option>';
-  
-  for (let i = 0; i < tracks.length; i++) {
-    const track = tracks[i];
-    if (track.kind === 'subtitles' || track.kind === 'captions') {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = track.label || `Track ${i + 1} (${track.language || 'Unknown'})`;
-      select.appendChild(option);
-      
-      // Auto-enable first subtitle track
-      if (i === 0) {
-        track.mode = 'showing';
-        select.value = i;
-        showNotif("Auto-detected subtitles enabled");
-      } else {
-        track.mode = 'disabled';
-      }
+function vttTimeToSec(t){
+  t = t.replace(",",".");
+  const parts = t.split(":");
+  if(parts.length === 3)
+    return parseFloat(parts[0])*3600 + parseFloat(parts[1])*60 + parseFloat(parts[2]);
+  if(parts.length === 2)
+    return parseFloat(parts[0])*60 + parseFloat(parts[1]);
+  return parseFloat(parts[0]);
+}
+
+// ── ASS → cues parser (basic) ──
+function parseASS(text){
+  const cues = [];
+  const lines = text.split(/\r?\n/);
+  const eventIdx = lines.findIndex(l => l.trim().toLowerCase().startsWith("[events]"));
+  if(eventIdx < 0) return cues;
+  // find format line
+  let fields = [];
+  for(let i = eventIdx+1; i < lines.length; i++){
+    if(lines[i].startsWith("Format:")){
+      fields = lines[i].replace("Format:","").split(",").map(f=>f.trim().toLowerCase());
+      continue;
+    }
+    if(lines[i].startsWith("Dialogue:")){
+      const vals = lines[i].replace("Dialogue:","").split(",");
+      // last field is text (may contain commas)
+      const startI = fields.indexOf("start");
+      const endI   = fields.indexOf("end");
+      const textI  = fields.indexOf("text");
+      if(startI<0||endI<0||textI<0) continue;
+      const start = assTimeToSec(vals[startI]?.trim());
+      const end   = assTimeToSec(vals[endI]?.trim());
+      const rawText = vals.slice(textI).join(",").trim()
+        .replace(/\{[^}]+\}/g,"")   // strip style tags {..}
+        .replace(/\\N/g,"\n")
+        .replace(/\\n/g,"\n");
+      if(rawText) cues.push({ start, end, text: rawText });
     }
   }
+  return cues;
 }
 
-function loadSubtitleFile(input) {
+function assTimeToSec(t){
+  if(!t) return 0;
+  const parts = t.split(":");
+  if(parts.length < 3) return 0;
+  return parseFloat(parts[0])*3600 + parseFloat(parts[1])*60 + parseFloat(parts[2]);
+}
+
+// ── SUBTITLE DISPLAY LOOP ──
+function startSubtitleLoop(){
+  if(!player) return;
+  cancelAnimationFrame(subtitleRAF);
+
+  const box  = document.getElementById("subtitleBox");
+  const span = document.getElementById("subtitleText");
+
+  function tick(){
+    if(!subtitleActive || !player){
+      box.style.display = "none";
+      return;
+    }
+
+    const t = player.currentTime;
+    const cue = subtitleCues.find(c => t >= c.start && t <= c.end);
+
+    if(cue){
+      span.textContent = cue.text;
+      box.style.display = "block";
+    } else {
+      box.style.display = "none";
+    }
+
+    subtitleRAF = requestAnimationFrame(tick);
+  }
+
+  subtitleRAF = requestAnimationFrame(tick);
+}
+
+function stopSubtitleLoop(){
+  cancelAnimationFrame(subtitleRAF);
+  document.getElementById("subtitleBox").style.display = "none";
+}
+
+// ── LOAD SUBTITLE FILE ──
+function loadSubtitleFile(input){
   const file = input.files[0];
-  if (!file || !player) return;
-  
+  if(!file) return;
+
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function(e){
     const content = e.target.result;
-    
-    // Create blob URL for subtitle file
-    const blob = new Blob([content], { type: 'text/vtt' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create track element
-    const track = document.createElement('track');
-    track.kind = 'subtitles';
-    track.src = url;
-    track.srclang = 'en';
-    track.label = file.name;
-    track.default = true;
-    
-    player.appendChild(track);
-    
-    // Add to select dropdown
-    const select = document.getElementById("subtitleSelect");
-    const option = document.createElement('option');
-    option.value = player.textTracks.length - 1;
-    option.textContent = file.name;
-    select.appendChild(option);
-    
-    // Enable the new subtitle
-    track.addEventListener('load', function() {
-      track.mode = 'showing';
-      select.value = player.textTracks.length - 1;
-      showNotif("Subtitle loaded: " + file.name);
-    });
+    const name    = file.name.toLowerCase();
+
+    let cues = [];
+    if(name.endsWith(".srt"))      cues = parseSRT(content);
+    else if(name.endsWith(".vtt")) cues = parseVTT(content);
+    else if(name.endsWith(".ass") || name.endsWith(".ssa")) cues = parseASS(content);
+
+    if(cues.length === 0){
+      showNotif("⚠ No subtitle cues found in file");
+      return;
+    }
+
+    subtitleCues = cues;
+
+    // add to dropdown
+    const sel = document.getElementById("subtitleSelect");
+    // remove any previous manual option
+    const existing = sel.querySelector('[data-manual]');
+    if(existing) existing.remove();
+
+    const opt = document.createElement("option");
+    opt.value     = "manual";
+    opt.textContent = "📄 " + file.name;
+    opt.dataset.manual = "1";
+    sel.appendChild(opt);
+    sel.value = "manual";
+
+    // activate
+    subtitleActive = true;
+    document.getElementById("subToggleBtn").classList.add("active");
+    startSubtitleLoop();
+    showNotif("✅ Subtitle loaded: " + file.name + " (" + cues.length + " lines)");
   };
-  
+
   reader.readAsText(file);
+  // reset so same file can be re-loaded
+  input.value = "";
 }
 
-function changeSubtitle() {
-  if (!player) return;
-  
-  const select = document.getElementById("subtitleSelect");
-  const selectedIndex = select.value;
-  
-  // Disable all tracks
-  for (let i = 0; i < player.textTracks.length; i++) {
-    player.textTracks[i].mode = 'disabled';
-  }
-  
-  // Enable selected track
-  if (selectedIndex !== "") {
-    player.textTracks[selectedIndex].mode = 'showing';
-    showNotif("Subtitle changed");
-  } else {
-    showNotif("Subtitles disabled");
+// ── SWITCH SUBTITLE TRACK (dropdown) ──
+function switchSubtitleTrack(){
+  const val = document.getElementById("subtitleSelect").value;
+  if(val === "" || val === "off"){
+    subtitleActive = false;
+    stopSubtitleLoop();
+    document.getElementById("subToggleBtn").classList.remove("active");
+    showNotif("Subtitles OFF");
+  } else if(val === "manual"){
+    if(subtitleCues.length === 0){
+      showNotif("⚠ Load a subtitle file first");
+      return;
+    }
+    subtitleActive = true;
+    document.getElementById("subToggleBtn").classList.add("active");
+    startSubtitleLoop();
+    showNotif("Subtitles ON");
   }
 }
 
-/* YOUTUBE */
-
+// ── YOUTUBE ──
 if(isYouTube(VIDEO_URL)){
-
   let id = "";
+  if(VIDEO_URL.includes("youtu.be")) id = VIDEO_URL.split("/").pop().split("?")[0];
+  else id = new URL(VIDEO_URL).searchParams.get("v");
 
-  if(VIDEO_URL.includes("youtu.be")){
+  container.innerHTML += `
+    <iframe src="https://www.youtube.com/embed/${id}?autoplay=1&cc_load_policy=1" allowfullscreen></iframe>`;
 
-    id =
-    VIDEO_URL.split("/").pop().split("?")[0];
+  document.getElementById("infoStatus").textContent = "YouTube Embed";
+  document.getElementById("overlay").style.display  = "none";
+  document.getElementById("centerPlay").style.display = "none";
 
-  }else{
-
-    id =
-    new URL(VIDEO_URL)
-    .searchParams.get("v");
-
-  }
-
-  container.innerHTML = `
-    <iframe
-      src="https://www.youtube.com/embed/${id}?autoplay=1&cc_load_policy=1"
-      allowfullscreen>
-    </iframe>
-  `;
-
-  document.getElementById("infoStatus")
-  .textContent = "YouTube Embed";
-
-  document.getElementById("overlay")
-  .style.display = "none";
-
-  document.getElementById("centerPlay")
-  .style.display = "none";
-
-}
-
-/* NORMAL VIDEO */
-
-else{
-
-  player =
-  document.createElement("video");
-
-  player.autoplay = true;
-  player.preload = "metadata";
+// ── NORMAL / HLS VIDEO ──
+} else {
+  player = document.createElement("video");
+  player.autoplay   = true;
+  player.preload    = "metadata";
   player.crossOrigin = "anonymous";
-
+  // disable native subtitle rendering — we handle it ourselves
+  player.textTracks && Object.defineProperty(player,'textTracks',{get:()=>({length:0})});
   container.appendChild(player);
 
-  /* HLS */
-
   if(isM3U8(VIDEO_URL)){
-
     if(Hls.isSupported()){
-
       const hls = new Hls();
-
       hls.loadSource(VIDEO_URL);
-
       hls.attachMedia(player);
-
-    }else{
-
+    } else {
       player.src = VIDEO_URL;
-
     }
-
-  }
-
-  else{
-
+  } else {
     player.src = VIDEO_URL;
-
   }
-
-  /* READY */
 
   player.addEventListener("loadedmetadata",()=>{
-
-    document.getElementById("infoStatus")
-    .textContent = "Ready";
-
-    document.getElementById("infoRes")
-    .textContent =
-    player.videoWidth +
-    "×" +
-    player.videoHeight;
-
-    document.getElementById("infoDur")
-    .textContent =
-    formatTime(player.duration);
-
-    // Auto-detect subtitles after metadata is loaded
-    setTimeout(autoDetectSubtitles, 1000);
-
+    document.getElementById("infoStatus").textContent = "Ready";
+    document.getElementById("infoRes").textContent    = player.videoWidth + "×" + player.videoHeight;
+    document.getElementById("infoDur").textContent    = formatTime(player.duration);
   });
-
-  /* TIME */
 
   player.addEventListener("timeupdate",()=>{
-
-    const pct =
-    (player.currentTime /
-    player.duration) * 100;
-
-    document.getElementById("progressFill")
-    .style.width = pct + "%";
-
-    document.getElementById("time")
-    .textContent =
-    formatTime(player.currentTime) +
-    " / " +
-    formatTime(player.duration);
-
+    const pct = (player.currentTime / player.duration) * 100;
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("time").textContent =
+      formatTime(player.currentTime) + " / " + formatTime(player.duration);
   });
 
+  player.addEventListener("play",  updateIcons);
+  player.addEventListener("pause", updateIcons);
+  player.addEventListener("ended", ()=>{ document.getElementById("infoStatus").textContent = "Ended"; });
+  player.addEventListener("waiting",()=>{ document.getElementById("infoStatus").textContent = "Buffering..."; });
+  player.addEventListener("playing",()=>{ document.getElementById("infoStatus").textContent = "Playing"; });
 }
 
-/* PLAY */
-
+// ── CONTROLS ──
 function togglePlay(){
-
   if(!player) return;
-
-  if(player.paused){
-
-    player.play();
-
-  }else{
-
-    player.pause();
-
-  }
-
-  updateIcons();
-
+  player.paused ? player.play() : player.pause();
 }
-
-/* ICONS */
 
 function updateIcons(){
-
   if(!player) return;
-
-  const paused = player.paused;
-
-  const path =
-  paused
-  ? "M8 5v14l11-7z"
-  : "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
-
+  const path = player.paused
+    ? "M8 5v14l11-7z"
+    : "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
   document.querySelectorAll("#playIcon path,#centerIcon path")
-  .forEach(el=>el.setAttribute("d",path));
-
+    .forEach(el => el.setAttribute("d", path));
 }
-
-/* SKIP */
 
 function skip(sec){
-
   if(!player) return;
-
   player.currentTime += sec;
-
-  showNotif(
-  (sec>0?"⏩ +":"⏪ ") +
-  Math.abs(sec) + "s");
-
+  showNotif((sec>0?"⏩ +":"⏪ ") + Math.abs(sec) + "s");
 }
-
-/* VOLUME */
 
 function setVolume(v){
-
   if(!player) return;
-
-  player.volume = v/100;
-
+  player.volume = v / 100;
 }
-
-/* FULLSCREEN */
 
 function toggleFullscreen(){
-
-  const wrap =
-  document.getElementById("playerWrap");
-
-  if(!document.fullscreenElement){
-
-    wrap.requestFullscreen();
-
-  }else{
-
-    document.exitFullscreen();
-
-  }
-
+  const wrap = document.getElementById("playerWrap");
+  document.fullscreenElement ? document.exitFullscreen() : wrap.requestFullscreen();
 }
-
-/* SPEED */
 
 function cycleSpeed(){
-
   if(!player) return;
-
-  if(currentSpeed === 1){
-
-    currentSpeed = 1.5;
-
-  }else if(currentSpeed === 1.5){
-
-    currentSpeed = 2;
-
-  }else{
-
-    currentSpeed = 1;
-
-  }
-
-  player.playbackRate =
-  currentSpeed;
-
-  showNotif(
-  "Speed " + currentSpeed + "×");
-
+  currentSpeed = currentSpeed === 1 ? 1.5 : currentSpeed === 1.5 ? 2 : 1;
+  player.playbackRate = currentSpeed;
+  showNotif("Speed " + currentSpeed + "×");
 }
 
-/* PROGRESS */
-
-document.getElementById("progress")
-.addEventListener("click",e=>{
-
+document.getElementById("progress").addEventListener("click", e => {
   if(!player) return;
-
-  const rect =
-  e.currentTarget
-  .getBoundingClientRect();
-
-  const pct =
-  (e.clientX - rect.left)
-  / rect.width;
-
-  player.currentTime =
-  pct * player.duration;
-
+  const rect = e.currentTarget.getBoundingClientRect();
+  player.currentTime = ((e.clientX - rect.left) / rect.width) * player.duration;
 });
-
-/* FORMAT TIME */
 
 function formatTime(sec){
-
-  if(!sec || isNaN(sec))
-  return "0:00";
-
-  const h =
-  Math.floor(sec/3600);
-
-  const m =
-  Math.floor((sec%3600)/60);
-
-  const s =
-  Math.floor(sec%60);
-
-  return h>0
-  ? h + ":" +
-    String(m).padStart(2,"0") +
-    ":" +
-    String(s).padStart(2,"0")
-
-  : m + ":" +
-    String(s).padStart(2,"0");
-
+  if(!sec || isNaN(sec)) return "0:00";
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = Math.floor(sec%60);
+  return h>0 ? h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+             : m+":"+String(s).padStart(2,"0");
 }
-
-/* NOTIF */
 
 let notifTimer;
-
 function showNotif(msg){
-
-  const el =
-  document.getElementById("notif");
-
+  const el = document.getElementById("notif");
   el.textContent = msg;
-
   el.classList.add("show");
-
   clearTimeout(notifTimer);
-
-  notifTimer = setTimeout(()=>{
-
-    el.classList.remove("show");
-
-  },2500);
-
+  notifTimer = setTimeout(() => el.classList.remove("show"), 2800);
 }
 
-/* SHORTCUTS */
-
-document.addEventListener("keydown",e=>{
-
+document.addEventListener("keydown", e => {
   if(!player) return;
-
-  if(e.key === " "){
-
-    e.preventDefault();
-
-    togglePlay();
-
-  }
-
-  if(e.key === "ArrowRight")
-  skip(10);
-
-  if(e.key === "ArrowLeft")
-  skip(-10);
-
-  if(e.key === "f")
-  toggleFullscreen();
-
-  if(e.key === "s"){
-    document.getElementById('subtitleFile').click();
-  }
-
+  if(e.key===" "){ e.preventDefault(); togglePlay(); }
+  if(e.key==="ArrowRight") skip(10);
+  if(e.key==="ArrowLeft")  skip(-10);
+  if(e.key==="f") toggleFullscreen();
+  if(e.key==="s") document.getElementById("subtitleFile").click();
 });
-
 </script>
-
 </body>
 </html>
